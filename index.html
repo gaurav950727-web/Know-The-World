@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🌍 Know the World - Country & Topic Explorer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #c1dfc4 0%, #deecdd 100%);
+      min-height: 100vh;
+      color: #173;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 10px 40px;
+    }
+    h1 {
+      color: #086972;
+      letter-spacing: 2px;
+      font-size: 2.4rem;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    #mainContainer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      max-width: 1200px;
+      width: 100%;
+    }
+    #countryList {
+      flex: 1 1 300px;
+      max-width: 350px;
+      background: rgba(255,255,255,0.13);
+      padding: 15px;
+      border-radius: 22px;
+      box-shadow: 0 10px 36px rgba(80,160,120,0.16);
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+    #countryList input {
+      width: 100%;
+      font-size: 1rem;
+      padding: 10px 14px;
+      border-radius: 25px;
+      border: none;
+      outline: none;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.09);
+    }
+    .country-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 15px;
+      margin-bottom: 8px;
+      background: linear-gradient(112deg, #ffd966 8%, #21b4c2 100%);
+      border-radius: 13px;
+      color: #165273;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.14s;
+      user-select: none;
+    }
+    .country-item:hover {
+      background: linear-gradient(112deg, #21b4c2 8%, #ffd966 100%);
+      color: #126;
+      transform: scale(1.04);
+    }
+    .country-item img {
+      width: 32px;
+      height: 24px;
+      border-radius: 5px;
+      box-shadow: 1px 2px 8px rgba(0,0,0,0.04);
+      border: 1px solid #fff3;
+      object-fit: cover;
+    }
+    #detailsContainer {
+      flex: 2 1 600px;
+      background: rgba(255,255,255,0.13);
+      border-radius: 22px;
+      padding: 22px 28px;
+      color: #165273;
+      box-shadow: 0 10px 36px rgba(40,140,120,0.16);
+      min-height: 75vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #countryHeader {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #21b4c2;
+    }
+    #countryFlag {
+      width: 48px;
+      height: 34px;
+      border-radius: 6px;
+      box-shadow: 1px 2px 8px rgba(0,0,0,0.1);
+      object-fit: cover;
+    }
+    #topicsList {
+      display: flex;
+      gap: 13px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .topic-btn {
+      background: rgba(255,255,255,0.28);
+      padding: 10px 16px;
+      border-radius: 14px;
+      box-shadow: 0 0 9px rgba(0,0,0,0.11);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: #118ab2;
+      border: 2px solid transparent;
+      transition: background 0.25s, border-color 0.25s;
+      user-select: none;
+    }
+    .topic-btn:hover {
+      background: rgba(132,250,176,0.6);
+      border-color: #21b4c2;
+      color: #126;
+      transform: scale(1.05);
+    }
+    .topic-btn.active {
+      background: #21b4c2;
+      color: white;
+      border-color: #084e4d;
+    }
+    #topicDetails {
+      flex-grow: 1;
+      background: rgba(255,255,255,0.4);
+      border-radius: 18px;
+      padding: 20px;
+      font-size: 1.13rem;
+      line-height: 1.55;
+      color: #0a3833;
+      overflow-y: auto;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+    }
+    @media (max-width: 900px) {
+      #mainContainer {
+        flex-direction: column;
+        align-items: center;
+      }
+      #countryList, #detailsContainer {
+        max-width: 95vw;
+        flex: none;
+        width: auto;
+        height: auto;
+        max-height: none;
+      }
+      #topicDetails {
+        max-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🌍 Know the World - Country & Topic Explorer</h1>
+  <div id="mainContainer">
+    <aside id="countryList">
+      <input type="text" id="countrySearch" placeholder="Search country..." autocomplete="off" />
+      <!-- Countries loaded here -->
+    </aside>
+    <section id="detailsContainer" aria-live="polite">
+      <div id="countryHeader" style="display:none;">
+        <img id="countryFlag" src="" alt="" />
+        <span id="countryName"></span>
+      </div>
+      <nav id="topicsList" style="display:none" aria-label="Country information topics">
+        <!-- Topic buttons go here -->
+      </nav>
+      <article id="topicDetails" style="display:none" tabindex="0">
+        <!-- Topic detail text -->
+      </article>
+    </section>
+  </div>
+
+  <script>
+    const countryCodes = {
+      "Afghanistan":"af","Albania":"al","Algeria":"dz","Andorra":"ad","Angola":"ao","Antigua and Barbuda":"ag","Argentina":"ar",
+      "Armenia":"am","Australia":"au","Austria":"at","Azerbaijan":"az","Bahamas":"bs","Bahrain":"bh","Bangladesh":"bd",
+      "Barbados":"bb","Belarus":"by","Belgium":"be","Belize":"bz","Benin":"bj","Bhutan":"bt","Bolivia":"bo","Bosnia and Herzegovina":"ba",
+      "Botswana":"bw","Brazil":"br","Brunei":"bn","Bulgaria":"bg","Burkina Faso":"bf","Burundi":"bi","Cabo Verde":"cv","Cambodia":"kh",
+      "Cameroon":"cm","Canada":"ca","Central African Republic":"cf","Chad":"td","Chile":"cl","China":"cn","Colombia":"co","Comoros":"km",
+      "Congo (Congo-Brazzaville)":"cg","Costa Rica":"cr","Côte d'Ivoire":"ci","Croatia":"hr","Cuba":"cu","Cyprus":"cy",
+      "Czechia (Czech Republic)":"cz","Democratic Republic of the Congo":"cd","Denmark":"dk","Djibouti":"dj","Dominica":"dm",
+      "Dominican Republic":"do","Ecuador":"ec","Egypt":"eg","El Salvador":"sv","Equatorial Guinea":"gq","Eritrea":"er","Estonia":"ee",
+      "Eswatini (formerly Swaziland)":"sz","Ethiopia":"et","Fiji":"fj","Finland":"fi","France":"fr","Gabon":"ga","Gambia":"gm","Georgia":"ge",
+      "Germany":"de","Ghana":"gh","Greece":"gr","Grenada":"gd","Guatemala":"gt","Guinea":"gn","Guinea-Bissau":"gw","Guyana":"gy","Haiti":"ht",
+      "Holy See (Vatican City)":"va","Honduras":"hn","Hungary":"hu","Iceland":"is","India":"in","Indonesia":"id","Iran":"ir","Iraq":"iq",
+      "Ireland":"ie","Israel":"il","Italy":"it","Jamaica":"jm","Japan":"jp","Jordan":"jo","Kazakhstan":"kz","Kenya":"ke","Kiribati":"ki",
+      "Kuwait":"kw","Kyrgyzstan":"kg","Laos":"la","Latvia":"lv","Lebanon":"lb","Lesotho":"ls","Liberia":"lr","Libya":"ly",
+      "Liechtenstein":"li","Lithuania":"lt","Luxembourg":"lu","Madagascar":"mg","Malawi":"mw","Malaysia":"my","Maldives":"mv","Mali":"ml",
+      "Malta":"mt","Marshall Islands":"mh","Mauritania":"mr","Mauritius":"mu","Mexico":"mx","Micronesia (Federated States of)":"fm","Monaco":"mc",
+      "Mongolia":"mn","Montenegro":"me","Morocco":"ma","Mozambique":"mz","Myanmar":"mm","Namibia":"na","Nauru":"nr","Nepal":"np",
+      "Netherlands":"nl","New Zealand":"nz","Nicaragua":"ni","Niger":"ne","Nigeria":"ng","North Korea":"kp","North Macedonia":"mk",
+      "Norway":"no","Oman":"om","Pakistan":"pk","Palau":"pw","Palestine":"ps","Panama":"pa","Papua New Guinea":"pg","Paraguay":"py",
+      "Peru":"pe","Philippines":"ph","Poland":"pl","Portugal":"pt","Qatar":"qa","Republic of Korea (South Korea)":"kr",
+      "Republic of Moldova":"md","Romania":"ro","Russian Federation":"ru","Rwanda":"rw","Saint Kitts and Nevis":"kn","Saint Lucia":"lc",
+      "Saint Vincent and the Grenadines":"vc","Samoa":"ws","San Marino":"sm","Sao Tome and Principe":"st","Saudi Arabia":"sa","Senegal":"sn",
+      "Serbia":"rs","Seychelles":"sc","Sierra Leone":"sl","Singapore":"sg","Slovakia":"sk","Slovenia":"si","Solomon Islands":"sb","Somalia":"so",
+      "South Africa":"za","South Sudan":"ss","Spain":"es","Sri Lanka":"lk","Sudan":"sd","Suriname":"sr","Sweden":"se","Switzerland":"ch",
+      "Syrian Arab Republic":"sy","Tajikistan":"tj","Tanzania":"tz","Thailand":"th","Timor-Leste":"tl","Togo":"tg","Tonga":"to",
+      "Trinidad and Tobago":"tt","Tunisia":"tn","Turkey":"tr","Turkmenistan":"tm","Tuvalu":"tv","Uganda":"ug","Ukraine":"ua",
+      "United Arab Emirates":"ae","United Kingdom":"gb","United States":"us","Uruguay":"uy","Uzbekistan":"uz","Vanuatu":"vu",
+      "Venezuela":"ve","Vietnam":"vn","Yemen":"ye","Zambia":"zm","Zimbabwe":"zw"
+    };
+
+    // For demo, limited example data. You can extend for all countries as needed.
+    const countryTopics = [
+      "Agriculture",
+      "Culture & Society",
+      "Economical Condition",
+      "Government Type",
+      "Population",
+      "Weather Condition"
+    ];
+
+    const countriesData = {
+      "Afghanistan": {
+        "Agriculture": "Wheat, fruits, nuts, and livestock farming dominate. Irrigation and modern farming face challenges due to climate and ongoing conflicts.",
+        "Culture & Society": "Strong tribal traditions and Islamic customs shape social life; poetry and hospitality are significant.",
+        "Economical Condition": "Economy suffers from instability and international sanctions; informal sector and agriculture dominate.",
+        "Government Type": "Governed by Taliban since 2021; international recognition limited with ongoing political tensions.",
+        "Population": "Estimated 40 million with diverse ethnic groups including Pashtun, Tajik, Hazara.",
+        "Weather Condition": "Mountainous terrain experiences cold winters, hot summers, and variable rainfall with drought and flash flood risks."
+      },
+      "India": {
+        "Agriculture": "Major crops include rice, wheat, sugarcane, cotton; growing sectors in livestock and aquaculture. Supports large rural populations.",
+        "Culture & Society": "Vibrant diversity with multiple religions, languages, and festivals; strong arts and cinema industries.",
+        "Economical Condition": "4th largest economy globally with diverse sectors: IT, manufacturing, services; ongoing digital expansion.",
+        "Government Type": "Federal parliamentary democracy; largest world democracy with regular, multi-party elections.",
+        "Population": "Around 1.46 billion people, largest in the world with a youthful population.",
+        "Weather Condition": "Varied subtropical climate; monsoon rains critical; risks of floods and cyclones."
+      },
+      "United States": {
+        "Agriculture": "Advanced mechanized agriculture producing wheat, corn, soybeans, livestock; major global exporter.",
+        "Culture & Society":  "Multicultural society with individualism, innovation, and strong entertainment industry influence.",
+        "Economical Condition": "World’s largest economy; key sectors include technology, finance, manufacturing, agriculture.",
+        "Government Type": "Federal presidential republic with strong institutional checks and balances.",
+        "Population": "About 347 million diverse in ethnicity and background with high immigration rates.",
+        "Weather Condition": "Wide climatic range from Arctic to tropical; prone to hurricanes, tornadoes, wildfires."
+      }
+      // Add all other countries similarly...
+    };
+
+    // Selected country and topic state
+    let selectedCountry = null;
+    let selectedTopic = null;
+
+    // Elements references
+    const countryListElem = document.getElementById('countryList');
+    const countrySearchInput = document.getElementById('countrySearch');
+    const countryHeaderElem = document.getElementById('countryHeader');
+    const countryFlagElem = document.getElementById('countryFlag');
+    const countryNameElem = document.getElementById('countryName');
+    const topicsListElem = document.getElementById('topicsList');
+    const topicDetailsElem = document.getElementById('topicDetails');
+
+    // Render country list according to search filter
+    function renderCountryList(filter = '') {
+      const countries = Object.keys(countryCodes).sort((a,b) => a.localeCompare(b));
+      countryListElem.querySelectorAll('.country-item').forEach(e=>e.remove());
+
+      countries.forEach(country => {
+        if(!country.toLowerCase().includes(filter.toLowerCase())) return;
+
+        const code = countryCodes[country];
+        const div = document.createElement('div');
+        div.className = 'country-item';
+        div.tabIndex = 0;
+        div.setAttribute('role', 'button');
+        div.setAttribute('aria-label', `View details for ${country}`);
+        div.onclick = () => selectCountry(country);
+        div.onkeydown = e => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectCountry(country); } };
+
+        const flagImg = document.createElement('img');
+        flagImg.src = `https://flagcdn.com/32x24/${code}.png`;
+        flagImg.alt = `${country} flag`;
+        div.appendChild(flagImg);
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = country;
+        div.appendChild(nameSpan);
+
+        countryListElem.appendChild(div);
+      });
+    }
+
+    // When a country is selected
+    function selectCountry(country) {
+      selectedCountry = country;
+      selectedTopic = null;
+
+      // Show header
+      countryHeaderElem.style.display = 'flex';
+      topicsListElem.style.display = 'flex';
+      topicDetailsElem.style.display = 'none';
+
+      countryFlagElem.src = `https://flagcdn.com/48x36/${countryCodes[country]}.png`;
+      countryFlagElem.alt = `${country} flag`;
+      countryNameElem.textContent = country;
+
+      // Clear previous topics
+      topicsListElem.innerHTML = '';
+      countryTopics.forEach(topic => {
+        const btn = document.createElement('button');
+        btn.textContent = topic;
+        btn.className = 'topic-btn';
+        btn.type = 'button';
+        btn.onclick = () => selectTopic(topic, btn);
+        topicsListElem.appendChild(btn);
+      });
+
+      // Set focus for accessibility
+      countryNameElem.focus();
+    }
+
+    // When a topic is selected
+    function selectTopic(topic, btn) {
+      selectedTopic = topic;
+
+      // Remove active class from all buttons
+      topicsListElem.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Show detail text
+      topicDetailsElem.style.display = 'block';
+      let detailText = "Information will appear here.";
+      if (countriesData[selectedCountry] && countriesData[selectedCountry][topic]) {
+        detailText = countriesData[selectedCountry][topic];
+      } else if (selectedCountry) {
+        detailText = `Information about ${topic.toLowerCase()} in ${selectedCountry} will appear here.`;
+      }
+      topicDetailsElem.textContent = detailText;
+      topicDetailsElem.focus();
+    }
+
+    // Filter countries by search box input
+    countrySearchInput.addEventListener('input', e => {
+      renderCountryList(e.target.value);
+    });
+
+    // Initial render
+    renderCountryList();
+
+  </script>
+</body>
+</html>
+
+
+
+
+Most🛑🛑
